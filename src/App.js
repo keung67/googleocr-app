@@ -341,6 +341,28 @@ function App() {
     setShowModal(false);
   };
 
+  // 在 App 组件中添加复制函数
+  const handleCopyText = () => {
+    if (results[currentIndex]) {
+      navigator.clipboard.writeText(results[currentIndex])
+        .then(() => {
+          // 可以添加一个临时的成功提示
+          const button = document.querySelector('.copy-button');
+          const originalText = button.textContent;
+          button.textContent = '已复制';
+          button.classList.add('copied');
+          
+          setTimeout(() => {
+            button.textContent = originalText;
+            button.classList.remove('copied');
+          }, 2000);
+        })
+        .catch(err => {
+          console.error('复制失败:', err);
+        });
+    }
+  };
+
   return (
     <div className="app">
       <header>
@@ -439,7 +461,15 @@ function App() {
               {results[currentIndex] && (
                 <div className="result-text">
                   <div className="result-header">
-                    第 {currentIndex + 1} 张图片的识别结果
+                    <span>第 {currentIndex + 1} 张图片的识别结果</span>
+                    {results[currentIndex] && (
+                      <button 
+                        className="copy-button"
+                        onClick={handleCopyText}
+                      >
+                        复制内容
+                      </button>
+                    )}
                   </div>
                   <div className="gradient-text">
                     {isStreaming ? (

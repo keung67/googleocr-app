@@ -705,6 +705,9 @@ main.has-content {
   margin-bottom: 1rem;
   padding-bottom: 0.5rem;
   border-bottom: 1px solid rgba(0, 113, 227, 0.1);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 /* 优化结果容器的滚动效果 */
@@ -1215,6 +1218,44 @@ main.has-content {
     color: #1d1d1f;
     -webkit-text-fill-color: #1d1d1f;
     background: none;
+  }
+}
+
+/* 添加复制按钮样式 */
+.copy-button {
+  background: #0071e3;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.copy-button:hover {
+  background: #0077ed;
+  transform: translateY(-1px);
+}
+
+.copy-button.copied {
+  background: #34c759;
+}
+
+/* 添加响应式样式 */
+@media (max-width: 768px) {
+  .result-header {
+    flex-direction: column;
+    gap: 0.5rem;
+    align-items: flex-start;
+  }
+  
+  .copy-button {
+    width: 100%;
+    justify-content: center;
   }
 }
 
