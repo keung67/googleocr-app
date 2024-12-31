@@ -1088,90 +1088,133 @@ main.has-content {
 
 .markdown-text {
   opacity: 0;
+  transition: opacity 0.3s ease;
 }
 
 .markdown-text.ready {
   opacity: 1;
 }
 
-/* 统一段落和列表的间距 */
-.markdown-text p,
-.markdown-text li,
-.markdown-text td,
-.markdown-text th {
-  margin: 0.3rem 0;  /* 减小间距 */
-  line-height: 1.6;  /* 减小行高 */
+.animated-line {
   opacity: 0;
-  animation: textReveal 2s ease-out forwards;
-  animation-delay: calc(var(--line-index, 0) * 100ms);
+  position: relative;
+  animation: smoothReveal 2.5s ease-out forwards;
+  animation-delay: calc(var(--index) * 80ms);
+  background: linear-gradient(90deg, #0071e3, #6200ff, #ff2cab);
+  background-size: 300% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  transition: color 0.5s ease, -webkit-text-fill-color 0.5s ease;
 }
 
-/* 列表样式优化 */
-.markdown-text ul,
-.markdown-text ol {
-  padding-left: 1.5rem;
-  margin: 0.5rem 0;  /* 减小列表整体的外边距 */
-}
-
-.markdown-text li + li {
-  margin-top: 0.2rem;  /* 减小列表项之间的间距 */
-}
-
-/* 表格样式优化 */
-.markdown-text table {
-  width: 100%;
-  border-collapse: collapse;
-  margin: 0.8rem 0;  /* 减小表格的外边距 */
-}
-
-.markdown-text th,
-.markdown-text td {
-  border: 1px solid #e0e0e0;
-  padding: 8px 12px;  /* 减小单元格内边距 */
-  text-align: left;
-}
-
-/* 动画效果保持不变 */
-@keyframes textReveal {
+@keyframes smoothReveal {
   0% {
     opacity: 0;
     transform: translateY(10px);
-    background: linear-gradient(90deg, #0071e3, #6200ff, #ff2cab);
-    background-size: 300% auto;
     background-position: 0% 50%;
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
-    -webkit-text-fill-color: transparent;
   }
   
-  40% {
+  20% {
     opacity: 1;
     transform: translateY(0);
-    background: linear-gradient(90deg, #0071e3, #6200ff, #ff2cab);
-    background-size: 300% auto;
-    background-position: 0% 50%;
-    -webkit-background-clip: text;
-    background-clip: text;
+  }
+  
+  85% {
+    background-position: 100% 50%;
     color: transparent;
     -webkit-text-fill-color: transparent;
   }
   
-  80% {
+  95% {
+    color: rgba(29, 29, 31, 0);
+    -webkit-text-fill-color: rgba(29, 29, 31, 0);
     background: linear-gradient(90deg, #0071e3, #6200ff, #ff2cab);
-    background-size: 300% auto;
-    background-position: 100% 50%;
     -webkit-background-clip: text;
     background-clip: text;
-    color: transparent;
-    -webkit-text-fill-color: transparent;
   }
   
   100% {
     opacity: 1;
-    background: none;
     color: #1d1d1f;
     -webkit-text-fill-color: #1d1d1f;
+    background: none;
+  }
+}
+
+/* 确保表格和列表的样式正确 */
+.result-text table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1rem 0;
+}
+
+.result-text th,
+.result-text td {
+  border: 1px solid #e0e0e0;
+  padding: 12px;
+  text-align: left;
+}
+
+.result-text ul,
+.result-text ol {
+  padding-left: 1.5rem;
+  margin: 1rem 0;
+}
+
+.result-text li {
+  margin: 0.5rem 0;
+}
+
+.streaming-text {
+  white-space: pre-wrap;
+  line-height: 1.8;
+}
+
+.animated-line {
+  opacity: 0;
+  animation: smoothReveal 2.5s ease-out forwards;
+  animation-delay: calc(var(--index) * 80ms);
+  background: linear-gradient(90deg, #0071e3, #6200ff, #ff2cab);
+  background-size: 300% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+}
+
+@keyframes smoothReveal {
+  0% {
+    opacity: 0;
+    transform: translateY(10px);
+    background-position: 0% 50%;
+  }
+  
+  20% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  
+  85% {
+    background-position: 100% 50%;
+    color: transparent;
+    -webkit-text-fill-color: transparent;
+  }
+  
+  95% {
+    color: rgba(29, 29, 31, 0);
+    -webkit-text-fill-color: rgba(29, 29, 31, 0);
+    background: linear-gradient(90deg, #0071e3, #6200ff, #ff2cab);
+    -webkit-background-clip: text;
+    background-clip: text;
+  }
+  
+  100% {
+    opacity: 1;
+    color: #1d1d1f;
+    -webkit-text-fill-color: #1d1d1f;
+    background: none;
   }
 }
 

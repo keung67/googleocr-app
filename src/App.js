@@ -33,6 +33,10 @@ function App() {
   const [isAnimating, setIsAnimating] = useState(false);
   const [animatedText, setAnimatedText] = useState('');
   const [isTextReady, setIsTextReady] = useState(false);
+  const [animationText, setAnimationText] = useState('');
+  const [showAnimation, setShowAnimation] = useState(false);
+  const [streamingText, setStreamingText] = useState('');
+  const [isStreaming, setIsStreaming] = useState(false);
 
   // 将文件转换为Base64
   const fileToGenerativePart = async (file) => {
@@ -54,8 +58,8 @@ function App() {
   const handleFile = async (file, index) => {
     if (file && file.type.startsWith('image/')) {
       try {
-        const imageUrl = URL.createObjectURL(file);
-        
+        setIsStreaming(true);
+        setStreamingText('');
         setResults(prev => {
           const newResults = [...prev];
           newResults[index] = '';
@@ -74,17 +78,19 @@ function App() {
         ]);
 
         let fullText = '';
-        
         for await (const chunk of result.stream) {
           const chunkText = chunk.text();
           fullText += chunkText;
+          setStreamingText(fullText);
           setResults(prevResults => {
             const newResults = [...prevResults];
             newResults[index] = fullText;
             return newResults;
           });
         }
-        setIsTextReady(true);
+
+        setIsStreaming(false);
+
       } catch (error) {
         console.error('Error details:', error);
         setResults(prevResults => {
@@ -92,9 +98,8 @@ function App() {
           newResults[index] = `识别出错,请重试 (${error.message})`;
           return newResults;
         });
+        setIsStreaming(false);
       }
-    } else {
-      alert('请上传图片文件');
     }
   };
 
@@ -142,15 +147,21 @@ function App() {
 
   // 修改图片切换函数
   const handlePrevImage = () => {
+    setShowAnimation(false);
     setCurrentIndex(prev => Math.max(0, prev - 1));
-    setIsTextReady(false);
-    setTimeout(() => setIsTextReady(true), 100);
+    setTimeout(() => {
+      setAnimationText(results[currentIndex - 1]);
+      setShowAnimation(true);
+    }, 100);
   };
 
   const handleNextImage = () => {
+    setShowAnimation(false);
     setCurrentIndex(prev => Math.min(images.length - 1, prev + 1));
-    setIsTextReady(false);
-    setTimeout(() => setIsTextReady(true), 100);
+    setTimeout(() => {
+      setAnimationText(results[currentIndex + 1]);
+      setShowAnimation(true);
+    }, 100);
   };
 
   // 处理拖拽事件
@@ -363,12 +374,48 @@ function App() {
                     第 {currentIndex + 1} 张图片的识别结果
                   </div>
                   <div className="gradient-text">
-                    <ReactMarkdown 
-                      className={`markdown-text ${isTextReady ? 'ready' : ''}`}
-                      remarkPlugins={[remarkGfm]}
-                    >
-                      {results[currentIndex]}
-                    </ReactMarkdown>
+                    {isStreaming ? (
+                      <div className="streaming-text">
+                        {streamingText.split('\n').map((line, index) => (
+                          <p 
+                            key={index} 
+                            className="animated-line"
+                            style={{ '--index': index }}
+                          >
+                            {line}
+                          </p>
+                        ))}
+                      </div>
+                    ) : (
+                      <ReactMarkdown 
+                        className="markdown-text ready"
+                        remarkPlugins={[remarkGfm]}
+                        components={{
+                          p: ({node, children}) => (
+                            <p className="animated-line">
+                              {children}
+                            </p>
+                          ),
+                          li: ({node, children}) => (
+                            <li className="animated-line">
+                              {children}
+                            </li>
+                          ),
+                          td: ({node, children}) => (
+                            <td className="animated-line">
+                              {children}
+                            </td>
+                          ),
+                          th: ({node, children}) => (
+                            <th className="animated-line">
+                              {children}
+                            </th>
+                          )
+                        }}
+                      >
+                        {results[currentIndex]}
+                      </ReactMarkdown>
+                    )}
                   </div>
                 </div>
               )}
