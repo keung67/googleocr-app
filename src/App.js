@@ -66,27 +66,57 @@ function App() {
           return newResults;
         });
 
-        const model = genAI.getGenerativeModel({
-          model: "gemini-2.0-flash-exp",
-          generationConfig,
+        // 将文件转换为 base64
+        const reader = new FileReader();
+        const imageData = await new Promise((resolve) => {
+          reader.onloadend = () => {
+            resolve(reader.result.split(',')[1]);
+          };
+          reader.readAsDataURL(file);
         });
 
-        const imagePart = await fileToGenerativePart(file);
-        const result = await model.generateContentStream([
-          "请你识别图片中的文字内容并输出，如果有格式不规整可以根据内容排版，或者单词错误中文词汇错误可以纠正，不要有任何开场白、解释、描述、总结或结束语。",
-          imagePart
-        ]);
+        // 创建 EventSource 连接
+        const eventSource = new EventSource(`/api/recognize?t=${Date.now()}`);
+        
+        // 发送图片数据
+        const response = await fetch('/api/recognize', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            imageData,
+            mimeType: file.type
+          }),
+        });
 
+        const reader = response.body.getReader();
         let fullText = '';
-        for await (const chunk of result.stream) {
-          const chunkText = chunk.text();
-          fullText += chunkText;
-          setStreamingText(fullText);
-          setResults(prevResults => {
-            const newResults = [...prevResults];
-            newResults[index] = fullText;
-            return newResults;
-          });
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          // 解码文本块
+          const chunk = new TextDecoder().decode(value);
+          const lines = chunk.split('\n');
+          
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              try {
+                const data = JSON.parse(line.slice(6));
+                fullText += data.text;
+                setStreamingText(fullText);
+                setResults(prevResults => {
+                  const newResults = [...prevResults];
+                  newResults[index] = fullText;
+                  return newResults;
+                });
+              } catch (e) {
+                console.error('Error parsing chunk:', e);
+              }
+            }
+          }
         }
 
         setIsStreaming(false);
