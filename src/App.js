@@ -38,19 +38,19 @@ function App() {
   const [streamingText, setStreamingText] = useState('');
   const [isStreaming, setIsStreaming] = useState(false);
 
-  // 添加粘贴事件监听
+  // 修改粘贴事件处理函数
   useEffect(() => {
     const handlePaste = async (e) => {
       e.preventDefault();
       const items = Array.from(e.clipboardData.items);
       
       for (const item of items) {
+        // 处理图片
         if (item.type.startsWith('image/')) {
           const file = item.getAsFile();
           if (file) {
             setIsLoading(true);
             try {
-              // 更新图片预览
               const imageUrl = URL.createObjectURL(file);
               const newIndex = images.length;
               
@@ -58,7 +58,6 @@ function App() {
               setResults(prev => [...prev, '']);
               setCurrentIndex(newIndex);
               
-              // 处理文件
               await handleFile(file, newIndex);
             } catch (error) {
               console.error('Error processing pasted image:', error);
@@ -67,17 +66,24 @@ function App() {
             }
           }
         }
+        // 处理文本（可能是链接）
+        else if (item.type === 'text/plain') {
+          item.getAsString(async (text) => {
+            // 检查是否是图片链接
+            if (text.match(/\.(jpg|jpeg|png|gif|webp)$/i) || text.startsWith('http')) {
+              setImageUrl(text);
+              setShowUrlInput(true);
+            }
+          });
+        }
       }
     };
 
-    // 添加粘贴事件监听器
     document.addEventListener('paste', handlePaste);
-
-    // 清理函数
     return () => {
       document.removeEventListener('paste', handlePaste);
     };
-  }, [images.length]); // 依赖项包含 images.length
+  }, [images.length]);
 
   // 将文件转换为Base64
   const fileToGenerativePart = async (file) => {
