@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -37,6 +37,47 @@ function App() {
   const [showAnimation, setShowAnimation] = useState(false);
   const [streamingText, setStreamingText] = useState('');
   const [isStreaming, setIsStreaming] = useState(false);
+
+  // 添加粘贴事件监听
+  useEffect(() => {
+    const handlePaste = async (e) => {
+      e.preventDefault();
+      const items = Array.from(e.clipboardData.items);
+      
+      for (const item of items) {
+        if (item.type.startsWith('image/')) {
+          const file = item.getAsFile();
+          if (file) {
+            setIsLoading(true);
+            try {
+              // 更新图片预览
+              const imageUrl = URL.createObjectURL(file);
+              const newIndex = images.length;
+              
+              setImages(prev => [...prev, imageUrl]);
+              setResults(prev => [...prev, '']);
+              setCurrentIndex(newIndex);
+              
+              // 处理文件
+              await handleFile(file, newIndex);
+            } catch (error) {
+              console.error('Error processing pasted image:', error);
+            } finally {
+              setIsLoading(false);
+            }
+          }
+        }
+      }
+    };
+
+    // 添加粘贴事件监听器
+    document.addEventListener('paste', handlePaste);
+
+    // 清理函数
+    return () => {
+      document.removeEventListener('paste', handlePaste);
+    };
+  }, [images.length]); // 依赖项包含 images.length
 
   // 将文件转换为Base64
   const fileToGenerativePart = async (file) => {
