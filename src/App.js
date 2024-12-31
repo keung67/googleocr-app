@@ -67,17 +67,14 @@ function App() {
         });
 
         // 将文件转换为 base64
-        const reader = new FileReader();
+        const fileReader = new FileReader();
         const imageData = await new Promise((resolve) => {
-          reader.onloadend = () => {
-            resolve(reader.result.split(',')[1]);
+          fileReader.onloadend = () => {
+            resolve(fileReader.result.split(',')[1]);
           };
-          reader.readAsDataURL(file);
+          fileReader.readAsDataURL(file);
         });
 
-        // 创建 EventSource 连接
-        const eventSource = new EventSource(`/api/recognize?t=${Date.now()}`);
-        
         // 发送图片数据
         const response = await fetch('/api/recognize', {
           method: 'POST',
@@ -90,11 +87,11 @@ function App() {
           }),
         });
 
-        const reader = response.body.getReader();
+        const streamReader = response.body.getReader();
         let fullText = '';
 
         while (true) {
-          const { done, value } = await reader.read();
+          const { done, value } = await streamReader.read();
           if (done) break;
 
           // 解码文本块
