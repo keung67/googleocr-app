@@ -17,9 +17,7 @@
   - 粘贴板上传
   - 图片链接上传
 
-## 在线体验
 
-访问 [高精度OCR识别](https://your-deployment-url.vercel.app) 即可在线使用。
 
 ## 部署说明
 
