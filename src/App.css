@@ -182,7 +182,7 @@ header p {
   padding: 2rem;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
   border: 1px solid rgba(0, 113, 227, 0.1);
-  transition: all 0.3s ease;
+  transition: none;
   overflow-y: auto;
   max-height: 100%;
   height: auto;
@@ -214,6 +214,7 @@ header p {
   color: #1d1d1f;
   width: 100%;
   padding: 1rem 0;
+  transition: none;
 }
 
 .animated-text {
@@ -347,6 +348,8 @@ header p {
 .gradient-text {
   opacity: 1;
   color: #1d1d1f;
+  position: relative;
+  min-height: 100px;
 }
 
 .gradient-text > div {
@@ -1173,44 +1176,48 @@ main.has-content {
 .streaming-text {
   white-space: pre-wrap;
   line-height: 1.8;
+  position: relative;
+  width: 100%;
+  min-height: inherit;
 }
 
 .animated-line {
   opacity: 0;
-  animation: smoothReveal 2.5s ease-out forwards;
-  animation-delay: calc(var(--index) * 80ms);
-  background: linear-gradient(90deg, #0071e3, #6200ff, #ff2cab);
-  background-size: 300% 100%;
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  -webkit-text-fill-color: transparent;
+  animation: smoothReveal 1s ease-out forwards;
+  animation-delay: calc(var(--index) * 50ms);
+  line-height: 1.8;
+  margin: 0.5rem 0;
+  min-height: 1.5em;
 }
 
 @keyframes smoothReveal {
   0% {
     opacity: 0;
-    transform: translateY(10px);
-    background-position: 0% 50%;
-  }
-  
-  20% {
-    opacity: 1;
-    transform: translateY(0);
-  }
-  
-  85% {
-    background-position: 100% 50%;
+    transform: translateY(5px);
+    background: linear-gradient(90deg, #0071e3, #6200ff, #ff2cab);
+    background-size: 300% 100%;
+    -webkit-background-clip: text;
+    background-clip: text;
     color: transparent;
     -webkit-text-fill-color: transparent;
   }
   
-  95% {
-    color: rgba(29, 29, 31, 0);
-    -webkit-text-fill-color: rgba(29, 29, 31, 0);
+  30% {
+    opacity: 1;
+    transform: translateY(0);
     background: linear-gradient(90deg, #0071e3, #6200ff, #ff2cab);
+    background-size: 300% 100%;
     -webkit-background-clip: text;
     background-clip: text;
+    color: transparent;
+    -webkit-text-fill-color: transparent;
+  }
+  
+  60% {
+    opacity: 1;
+    color: rgba(29, 29, 31, 0.8);
+    -webkit-text-fill-color: rgba(29, 29, 31, 0.8);
+    background: none;
   }
   
   100% {
@@ -1219,6 +1226,16 @@ main.has-content {
     -webkit-text-fill-color: #1d1d1f;
     background: none;
   }
+}
+
+/* 确保 Markdown 文本也使用相同的动画 */
+.markdown-text.ready p,
+.markdown-text.ready li,
+.markdown-text.ready td,
+.markdown-text.ready th {
+  opacity: 0;
+  animation: smoothReveal 1s ease-out forwards;
+  animation-delay: calc(var(--index) * 50ms);
 }
 
 /* 添加复制按钮样式 */
@@ -1293,6 +1310,51 @@ main.has-content {
   .github-link svg {
     width: 28px;
     height: 28px;
+  }
+}
+
+/* LaTeX 公式样式 */
+.latex-inline {
+  display: inline-block;
+  vertical-align: middle;
+  margin: 0 0.2em;
+}
+
+.latex-block {
+  display: block;
+  margin: 1em 0;
+  text-align: center;
+}
+
+/* 确保公式也有渐变效果 */
+.animated-line .latex-inline,
+.animated-line .latex-block {
+  opacity: inherit;
+  color: inherit;
+  -webkit-text-fill-color: inherit;
+}
+
+/* 优化公式显示 */
+.katex {
+  font-size: 1.1em;
+}
+
+.katex-display {
+  margin: 1em 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 0.5em 0;
+}
+
+/* 确保公式在移动端也能正确显示 */
+@media (max-width: 768px) {
+  .katex-display {
+    font-size: 0.9em;
+  }
+  
+  .latex-block {
+    max-width: 100%;
+    overflow-x: auto;
   }
 }
 

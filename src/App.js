@@ -5,6 +5,8 @@ import remarkGfm from 'remark-gfm';
 import './App.css';
 import TextTransition, { presets } from 'react-text-transition';
 import { TypeAnimation } from 'react-type-animation';
+import 'katex/dist/katex.min.css';
+import { InlineMath, BlockMath } from 'react-katex';
 
 // 初始化 Gemini API
 const genAI = new GoogleGenerativeAI(process.env.REACT_APP_GEMINI_API_KEY);
@@ -15,6 +17,17 @@ const generationConfig = {
   topP: 0.95,
   topK: 40,
   maxOutputTokens: 8192,
+};
+
+// 在 App 组件中添加 LaTeX 处理函数
+const processLatex = (text) => {
+  // 处理行间公式: $$formula$$ (先处理行间公式，避免与行内公式冲突)
+  text = text.replace(/\$\$([\s\S]+?)\$\$/g, '@@@@@$1@@@@@');
+  
+  // 处理行内公式: $formula$
+  text = text.replace(/\$([^$\n]+?)\$/g, '@@@@$1@@@@');
+  
+  return text;
 };
 
 function App() {
@@ -113,51 +126,93 @@ function App() {
           return newResults;
         });
 
-        // 将文件转换为 base64
-        const fileReader = new FileReader();
-        const imageData = await new Promise((resolve) => {
-          fileReader.onloadend = () => {
-            resolve(fileReader.result.split(',')[1]);
-          };
-          fileReader.readAsDataURL(file);
-        });
-
-        // 发送图片数据
-        const response = await fetch('/api/recognize', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            imageData,
-            mimeType: file.type
-          }),
-        });
-
-        const streamReader = response.body.getReader();
         let fullText = '';
+        
+        // 判断是开发环境还是生产环境
+        if (process.env.NODE_ENV === 'development') {
+          // 开发环境：直接调用 Gemini API
+          const genAI = new GoogleGenerativeAI(process.env.REACT_APP_GEMINI_API_KEY);
+          const model = genAI.getGenerativeModel({
+            model: "gemini-2.0-flash-exp",
+            generationConfig,
+          });
 
-        while (true) {
-          const { done, value } = await streamReader.read();
-          if (done) break;
+          const imagePart = await fileToGenerativePart(file);
+          const result = await model.generateContentStream([
+            "请你识别图片中的文字内容并输出。注意：" +
+            "1. 仅在识别到明确的数学公式、数学符号、数学表达式时才使用LaTeX格式：" +
+            "   - 普通文字、标点符号、普通数字不需要LaTeX格式" +
+            "   - 只有涉及数学符号（如分数、根号、积分、求和、极限等）时才使用LaTeX" +
+            "   - 单独的等号、大于小于号如果不在公式中则不需要LaTeX" +
+            "2. 对于确定的数学公式：" +
+            "   - 行内公式（较短的、嵌在文字中的公式）用单个$包裹" +
+            "   - 行间公式（独立成行的、较长的公式）用$$包裹" +
+            "   - 分段函数、方程组使用 \\begin{cases} ... \\end{cases}" +
+            "3. 数学符号的LaTeX格式：" +
+            "   - 分数：\\frac{分子}{分母}" +
+            "   - 根号：\\sqrt[n]{}" +
+            "   - 上标：^{}" +
+            "   - 下标：_{}" +
+            "4. 保持公式的完整性，注意括号配对和格式对齐" +
+            "5. 如果有格式不规整可以根据内容优化排版" +
+            "6. 不要有任何开场白、解释、描述、总结或结束语",
+            imagePart
+          ]);
 
-          // 解码文本块
-          const chunk = new TextDecoder().decode(value);
-          const lines = chunk.split('\n');
-          
-          for (const line of lines) {
-            if (line.startsWith('data: ')) {
-              try {
-                const data = JSON.parse(line.slice(6));
-                fullText += data.text;
-                setStreamingText(fullText);
-                setResults(prevResults => {
-                  const newResults = [...prevResults];
-                  newResults[index] = fullText;
-                  return newResults;
-                });
-              } catch (e) {
-                console.error('Error parsing chunk:', e);
+          for await (const chunk of result.stream) {
+            const chunkText = chunk.text();
+            fullText += chunkText;
+            setStreamingText(fullText);
+            setResults(prevResults => {
+              const newResults = [...prevResults];
+              newResults[index] = fullText;
+              return newResults;
+            });
+          }
+        } else {
+          // 生产环境：通过 Vercel API 调用
+          const fileReader = new FileReader();
+          const imageData = await new Promise((resolve) => {
+            fileReader.onloadend = () => {
+              resolve(fileReader.result.split(',')[1]);
+            };
+            fileReader.readAsDataURL(file);
+          });
+
+          const response = await fetch('/api/recognize', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              imageData,
+              mimeType: file.type
+            }),
+          });
+
+          const streamReader = response.body.getReader();
+
+          while (true) {
+            const { done, value } = await streamReader.read();
+            if (done) break;
+
+            const chunk = new TextDecoder().decode(value);
+            const lines = chunk.split('\n');
+            
+            for (const line of lines) {
+              if (line.startsWith('data: ')) {
+                try {
+                  const data = JSON.parse(line.slice(6));
+                  fullText += data.text;
+                  setStreamingText(fullText);
+                  setResults(prevResults => {
+                    const newResults = [...prevResults];
+                    newResults[index] = fullText;
+                    return newResults;
+                  });
+                } catch (e) {
+                  console.error('Error parsing chunk:', e);
+                }
               }
             }
           }
@@ -567,48 +622,53 @@ function App() {
                     )}
                   </div>
                   <div className="gradient-text">
-                    {isStreaming ? (
-                      <div className="streaming-text">
-                        {streamingText.split('\n').map((line, index) => (
-                          <p 
-                            key={index} 
-                            className="animated-line"
-                            style={{ '--index': index }}
-                          >
-                            {line}
-                          </p>
-                        ))}
-                      </div>
-                    ) : (
-                      <ReactMarkdown 
-                        className="markdown-text ready"
-                        remarkPlugins={[remarkGfm]}
-                        components={{
-                          p: ({node, children}) => (
-                            <p className="animated-line">
-                              {children}
+                    <div className="streaming-text">
+                      {streamingText.split('\n').map((line, index) => {
+                        // 检查是否包含 LaTeX 公式
+                        if (line.includes('$')) {
+                          const processedLine = processLatex(line);
+                          const parts = processedLine.split(/(@@@@[^@]+@@@@|@@@@@[^@]+@@@@@)/g);
+                          
+                          return (
+                            <p 
+                              key={index} 
+                              className="animated-line"
+                              style={{ '--index': index }}
+                            >
+                              {parts.map((part, i) => {
+                                if (part.startsWith('@@@@') && part.endsWith('@@@@')) {
+                                  // 行内公式
+                                  return (
+                                    <span key={i} className="latex-inline">
+                                      <InlineMath math={part.slice(4, -4)} />
+                                    </span>
+                                  );
+                                } else if (part.startsWith('@@@@@') && part.endsWith('@@@@@')) {
+                                  // 行间公式
+                                  return (
+                                    <span key={i} className="latex-block">
+                                      <BlockMath math={part.slice(5, -5)} />
+                                    </span>
+                                  );
+                                } else {
+                                  return part;
+                                }
+                              })}
                             </p>
-                          ),
-                          li: ({node, children}) => (
-                            <li className="animated-line">
-                              {children}
-                            </li>
-                          ),
-                          td: ({node, children}) => (
-                            <td className="animated-line">
-                              {children}
-                            </td>
-                          ),
-                          th: ({node, children}) => (
-                            <th className="animated-line">
-                              {children}
-                            </th>
-                          )
-                        }}
-                      >
-                        {results[currentIndex]}
-                      </ReactMarkdown>
-                    )}
+                          );
+                        } else {
+                          return (
+                            <p 
+                              key={index} 
+                              className="animated-line"
+                              style={{ '--index': index }}
+                            >
+                              {line || ' '}
+                            </p>
+                          );
+                        }
+                      })}
+                    </div>
                   </div>
                 </div>
               )}
