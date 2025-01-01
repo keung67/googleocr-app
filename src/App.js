@@ -69,8 +69,8 @@ function App() {
         // 处理文本（可能是链接）
         else if (item.type === 'text/plain') {
           item.getAsString(async (text) => {
-            // 检查是否是图片链接
-            if (text.match(/\.(jpg|jpeg|png|gif|webp)$/i) || text.startsWith('http')) {
+            // 如果文本包含 http 或 https，就认为是链接
+            if (text.match(/https?:\/\//i)) {
               setImageUrl(text);
               setShowUrlInput(true);
             }
@@ -312,26 +312,105 @@ function App() {
     setIsLoading(true);
     
     try {
-      const response = await fetch(imageUrl);
-      const blob = await response.blob();
-      const file = new File([blob], 'image.jpg', { type: blob.type });
+      let imageBlob;
       
-      // 更新图片预览
+      // 处理 base64 图片
+      if (imageUrl.startsWith('data:image/')) {
+        const base64Data = imageUrl.split(',')[1];
+        const byteCharacters = atob(base64Data);
+        const byteArrays = [];
+        
+        for (let i = 0; i < byteCharacters.length; i++) {
+          byteArrays.push(byteCharacters.charCodeAt(i));
+        }
+        
+        imageBlob = new Blob([new Uint8Array(byteArrays)], { type: 'image/png' });
+      } else {
+        // 使用多个代理服务，如果一个失败就尝试下一个
+        const proxyServices = [
+          (url) => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+          (url) => `https://cors-anywhere.herokuapp.com/${url}`,
+          (url) => `https://proxy.cors.sh/${url}`,
+          (url) => `https://corsproxy.io/?${encodeURIComponent(url)}`
+        ];
+
+        let error;
+        for (const getProxyUrl of proxyServices) {
+          try {
+            const proxyUrl = getProxyUrl(imageUrl);
+            const response = await fetch(proxyUrl, {
+              headers: {
+                'x-requested-with': 'XMLHttpRequest',
+                'origin': window.location.origin
+              }
+            });
+            
+            if (!response.ok) throw new Error('Proxy fetch failed');
+            imageBlob = await response.blob();
+            // 如果成功获取图片，跳出循环
+            break;
+          } catch (e) {
+            error = e;
+            // 如果当前代理失败，继续尝试下一个
+            continue;
+          }
+        }
+
+        // 如果所有代理都失败了，尝试直接获取
+        if (!imageBlob) {
+          try {
+            const response = await fetch(imageUrl, {
+              mode: 'no-cors'
+            });
+            imageBlob = await response.blob();
+          } catch (e) {
+            // 如果直接获取也失败，抛出最后的错误
+            throw error || e;
+          }
+        }
+      }
+      
+      // 确保获取到的是图片
+      if (!imageBlob.type.startsWith('image/')) {
+        // 如果 MIME 类型不是图片，尝试强制设置为图片
+        imageBlob = new Blob([imageBlob], { type: 'image/jpeg' });
+      }
+      
+      const file = new File([imageBlob], 'image.jpg', { type: imageBlob.type });
       const imageUrlObject = URL.createObjectURL(file);
-      const newIndex = images.length;
       
+      // 验证图片是否可用
+      await new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = resolve;
+        img.onerror = reject;
+        img.src = imageUrlObject;
+      });
+      
+      const newIndex = images.length;
       setImages(prev => [...prev, imageUrlObject]);
       setResults(prev => [...prev, '']);
       setCurrentIndex(newIndex);
       
-      // 处理文件
       await handleFile(file, newIndex);
       
       setShowUrlInput(false);
       setImageUrl('');
     } catch (error) {
       console.error('Error loading image:', error);
-      alert('无法加载图片，请检查链接是否正确');
+      
+      // 提供更详细的错误信息
+      let errorMessage = '无法加载图片，';
+      if (error.message.includes('CORS')) {
+        errorMessage += '该图片可能有访问限制。';
+      } else if (error.message.includes('network')) {
+        errorMessage += '网络连接出现问题。';
+      } else {
+        errorMessage += '请检查链接是否正确。';
+      }
+      errorMessage += '\n您可以尝试：\n1. 右键图片另存为后上传\n2. 使用截图工具后粘贴\n3. 复制图片本身而不是链接';
+      
+      alert(errorMessage);
     } finally {
       setIsLoading(false);
     }
