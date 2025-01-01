@@ -1,70 +1,107 @@
-# Getting Started with Create React App
+# 高精度OCR识别
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 
-## Available Scripts
 
-In the project directory, you can run:
+一个基于 Google Gemini Vision 的高精度 OCR 文字识别应用，支持多国语言和手写字体识别。
 
-### `npm start`
+## 功能特点
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+- 🚀 高精度文字识别
+- 🌍 支持多国语言识别
+- ✍️ 支持手写字体识别
+- 🎨 优雅的渐变动画效果
+- 📱 响应式设计，支持移动端
+- 🖼️ 多种图片输入方式：
+  - 文件上传
+  - 拖拽上传
+  - 粘贴板上传
+  - 图片链接上传
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+## 在线体验
 
-### `npm test`
+访问 [高精度OCR识别](https://your-deployment-url.vercel.app) 即可在线使用。
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+## 部署说明
 
-### `npm run build`
+本项目使用 Vercel 进行部署。在部署时需要设置以下环境变量：
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fcokice%2Fgoogleocr-app&env=GEMINI_API_KEY&envDescription=Your%20Google%20Gemini%20API&project-name=geminiocr&repository-name=geminiocr)
+- `GEMINI_API_KEY`: Google Gemini API 密钥
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+## 本地开发
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+### 环境要求
 
-### `npm run eject`
+- Node.js 16.x 或更高版本
+- npm 或 yarn
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+### 安装步骤
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+1. 克隆项目
+```bash
+git clone https://github.com/your-username/ocr-app.git
+cd ocr-app
+```
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+2. 安装依赖
+```bash
+npm install
+# 或
+yarn install
+```
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+3. 配置环境变量
+创建 `.env.local` 文件并添加以下配置：
+```
+REACT_APP_GEMINI_API_KEY=your_api_key_here
+```
 
-## Learn More
+4. 启动开发服务器
+```bash
+npm start
+# 或
+yarn start
+```
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+访问 http://localhost:3000 即可看到应用。
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+## 技术栈
 
-### Code Splitting
+- React.js
+- Google Gemini Vision API
+- CSS3 动画
+- React Markdown
+- Vercel 部署
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+## 主要功能
 
-### Analyzing the Bundle Size
+### 图片上传
+- 支持拖拽上传
+- 支持粘贴上传（包括截图和图片文件）
+- 支持图片链接上传
+- 支持多图片批量上传
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+### 文字识别
+- 实时流式输出
+- 优雅的渐变动画效果
+- 支持多国语言
+- 支持手写体识别
+- 自动优化排版格式
 
-### Making a Progressive Web App
+### 结果展示
+- 支持 Markdown 格式
+- 一键复制识别结果
+- 图片预览功能
+- 多图片导航切换
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
 
-### Advanced Configuration
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+## 注意事项
 
-### Deployment
+- 请确保您的 Google Gemini API 密钥有足够的配额
+- 图片链接需要允许跨域访问
+- 建议上传清晰的图片以获得最佳识别效果
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+## 开源协议
 
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+MIT License
