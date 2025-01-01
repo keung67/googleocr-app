@@ -1259,3 +1259,40 @@ main.has-content {
   }
 }
 
+/* 添加 GitHub 图标样式 */
+.github-link {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  z-index: 1000;
+  transition: transform 0.3s ease;
+}
+
+.github-link:hover {
+  transform: scale(1.1);
+}
+
+.github-link svg {
+  fill: #1d1d1f;
+  opacity: 0.8;
+  transition: all 0.3s ease;
+}
+
+.github-link:hover svg {
+  fill: #0071e3;
+  opacity: 1;
+}
+
+/* 适配移动端 */
+@media (max-width: 768px) {
+  .github-link {
+    top: 0.5rem;
+    right: 0.5rem;
+  }
+  
+  .github-link svg {
+    width: 28px;
+    height: 28px;
+  }
+}
+
