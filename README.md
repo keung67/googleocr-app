@@ -17,7 +17,7 @@
 
 ## 演示
 
-![演示](./demo.gif)
+![演示](https://ibb.co/7vHfw7K)
 
 ## 部署说明
 
