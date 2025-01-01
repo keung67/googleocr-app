@@ -2,7 +2,7 @@
 
 
 
-一个基于 Google Gemini Vision 的高精度 OCR 文字识别应用，支持多国语言和手写字体识别。
+一个基于 Google Gemini 2.0的高精度 OCR 文字识别应用，支持多国语言和手写字体识别。
 
 ## 功能特点
 
