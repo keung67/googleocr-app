@@ -305,35 +305,98 @@ header p {
 }
 
 .upload-zone {
-  background: rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border: 2px dashed rgba(0, 113, 227, 0.2);
-  border-radius: 20px;
-  padding: 3rem 2rem;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+  position: relative;
+  border: 2px dashed #ccc;
+  border-radius: 8px;
+  padding: 20px;
+  text-align: center;
   transition: all 0.3s ease;
+  background: rgba(255, 255, 255, 0.9);
+  min-height: 200px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  text-align: center;
-}
-
-.upload-zone::before {
-  display: none;
-}
-
-.upload-zone:hover {
-  border-color: #0071e3;
-  transform: translateY(-2px);
-  box-shadow: 0 15px 35px rgba(0, 113, 227, 0.1);
 }
 
 .upload-zone.dragging {
-  border-color: #0071e3;
-  background: rgba(240, 247, 255, 0.9);
-  transform: scale(1.01);
+  border-color: #4CAF50;
+  background: rgba(76, 175, 80, 0.05);
+  transform: scale(1.02);
+  box-shadow: 0 0 20px rgba(76, 175, 80, 0.2);
+}
+
+.upload-zone.dragging .upload-container,
+.upload-zone.dragging .upload-hint {
+  opacity: 0;
+  visibility: hidden;
+}
+
+.upload-zone.dragging::after {
+  content: '拖拽到此处上传图片';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 1.2em;
+  color: #4CAF50;
+  background: rgba(255, 255, 255, 0.9);
+  padding: 10px 20px;
+  border-radius: 4px;
+  z-index: 10;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -40%);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%);
+  }
+}
+
+.upload-container {
+  transition: all 0.3s ease;
+}
+
+.upload-hint {
+  margin-top: 1rem;
+  color: #86868b;
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+}
+
+.drag-overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(76, 175, 80, 0.1);
+  z-index: 1000;
+  pointer-events: none;
+}
+
+.drag-overlay.active {
+  display: block;
+}
+
+.drag-overlay::after {
+  content: '将图片拖到下方框内';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 1.5em;
+  color: #4CAF50;
+  background: rgba(255, 255, 255, 0.9);
+  padding: 15px 30px;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 
 .upload-hint {

@@ -27,6 +27,7 @@ function App() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+  const [isDraggingGlobal, setIsDraggingGlobal] = useState(false);
   const resultRef = useRef(null);
   const dropZoneRef = useRef(null);
   const [showUrlInput, setShowUrlInput] = useState(false);
@@ -264,36 +265,69 @@ function App() {
 
   // 修改图片切换函数
   const handlePrevImage = () => {
-    setShowAnimation(false);
-    setCurrentIndex(prev => Math.max(0, prev - 1));
-    setTimeout(() => {
-      setAnimationText(results[currentIndex - 1]);
-      setShowAnimation(true);
-    }, 100);
+    if (currentIndex > 0) {
+      setCurrentIndex(prev => prev - 1);
+      setStreamingText(results[currentIndex - 1] || '');
+    }
   };
 
   const handleNextImage = () => {
-    setShowAnimation(false);
-    setCurrentIndex(prev => Math.min(images.length - 1, prev + 1));
-    setTimeout(() => {
-      setAnimationText(results[currentIndex + 1]);
-      setShowAnimation(true);
-    }, 100);
+    if (currentIndex < images.length - 1) {
+      setCurrentIndex(prev => prev + 1);
+      setStreamingText(results[currentIndex + 1] || '');
+    }
   };
 
-  // 处理拖拽事件
+  // 添加全局拖拽事件监听
+  useEffect(() => {
+    const handleGlobalDragEnter = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (!isDraggingGlobal) {
+        setIsDraggingGlobal(true);
+        setIsDragging(true);
+      }
+    };
+
+    const handleGlobalDragLeave = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const rect = document.body.getBoundingClientRect();
+      if (
+        e.clientX <= rect.left ||
+        e.clientX >= rect.right ||
+        e.clientY <= rect.top ||
+        e.clientY >= rect.bottom
+      ) {
+        setIsDraggingGlobal(false);
+        setIsDragging(false);
+      }
+    };
+
+    const handleGlobalDrop = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setIsDraggingGlobal(false);
+      setIsDragging(false);
+    };
+
+    window.addEventListener('dragenter', handleGlobalDragEnter);
+    window.addEventListener('dragleave', handleGlobalDragLeave);
+    window.addEventListener('drop', handleGlobalDrop);
+    window.addEventListener('dragover', (e) => e.preventDefault());
+
+    return () => {
+      window.removeEventListener('dragenter', handleGlobalDragEnter);
+      window.removeEventListener('dragleave', handleGlobalDragLeave);
+      window.removeEventListener('drop', handleGlobalDrop);
+      window.removeEventListener('dragover', (e) => e.preventDefault());
+    };
+  }, [isDraggingGlobal]);
+
+  // 修改原有的拖拽处理函数
   const handleDragEnter = (e) => {
     e.preventDefault();
     e.stopPropagation();
-    setIsDragging(true);
-  };
-
-  const handleDragLeave = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (e.target === dropZoneRef.current) {
-      setIsDragging(false);
-    }
   };
 
   const handleDragOver = (e) => {
@@ -301,12 +335,27 @@ function App() {
     e.stopPropagation();
   };
 
+  const handleDragLeave = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const rect = dropZoneRef.current.getBoundingClientRect();
+    if (
+      e.clientX <= rect.left ||
+      e.clientX >= rect.right ||
+      e.clientY <= rect.top ||
+      e.clientY >= rect.bottom
+    ) {
+      setIsDragging(false);
+    }
+  };
+
   const handleDrop = async (e) => {
     e.preventDefault();
     e.stopPropagation();
     setIsDragging(false);
+    setIsDraggingGlobal(false);
     setIsLoading(true);
-
+    
     try {
       const items = Array.from(e.dataTransfer.items);
       const filePromises = items.map(async (item) => {
@@ -324,19 +373,13 @@ function App() {
       });
 
       const files = (await Promise.all(filePromises)).filter(file => file !== null);
-      const startIndex = images.length;  // 获取当前图片数量作为起始索引
+      const startIndex = images.length;
       
-      // 先一次性更新所有图片预览
       const imageUrls = files.map(file => URL.createObjectURL(file));
       setImages(prev => [...prev, ...imageUrls]);
-      
-      // 初始化结果数组
       setResults(prev => [...prev, ...new Array(files.length).fill('')]);
-      
-      // 立即切换到第一张新图片
       setCurrentIndex(startIndex);
       
-      // 使用并发控制处理文件
       await concurrentProcess(
         files,
         (file, index) => handleFile(file, startIndex + index)
