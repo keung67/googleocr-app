@@ -30,7 +30,7 @@ https://ocr.howen.ink/
 
 注意事项:
 - 整个过程非常简单直观
-- 需要使用非香港地区的网络环境访问
+- **需要使用非香港、澳门、大陆地区的网络环境访问**
 - API key 创建后请妥善保管
 - `GEMINI_API_KEY`: Google Gemini API 密钥
 
