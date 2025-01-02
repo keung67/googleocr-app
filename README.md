@@ -15,9 +15,8 @@
   - 粘贴板上传
   - 图片链接上传
 
-## 演示
-
-![演示](https://ibb.co/7vHfw7K)
+## 演示网站
+https://ocr.howen.ink/
 
 ## 部署说明
 
