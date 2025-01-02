@@ -28,11 +28,9 @@ https://ocr.howen.ink/
 2. 点击左上角的 "Get API key" 按钮
 3. 按照提示完成 API key 的创建
 
-注意事项:
-- 整个过程非常简单直观
+**注意事项:**
 - **需要使用非香港、澳门、大陆地区的网络环境访问**
-- API key 创建后请妥善保管
-- `GEMINI_API_KEY`: Google Gemini API 密钥
+
 
 ## 本地开发
 
