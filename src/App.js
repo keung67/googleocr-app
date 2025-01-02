@@ -1,32 +1,23 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
-import './App.css';
-import TextTransition, { presets } from 'react-text-transition';
-import { TypeAnimation } from 'react-type-animation';
 import 'katex/dist/katex.min.css';
 import { InlineMath, BlockMath } from 'react-katex';
+import './App.css';
 
 // 初始化 Gemini API
 const genAI = new GoogleGenerativeAI(process.env.REACT_APP_GEMINI_API_KEY);
 
-// 添加配置
+// 添加 generationConfig 配置
 const generationConfig = {
-  temperature: 1,
-  topP: 0.95,
-  topK: 40,
+  temperature: 0,  // 降低随机性
+  topP: 1,
+  topK: 1,
   maxOutputTokens: 8192,
 };
 
-// 在 App 组件中添加 LaTeX 处理函数
+// 简化 LaTeX 处理函数
 const processLatex = (text) => {
-  // 处理行间公式: $$formula$$ (先处理行间公式，避免与行内公式冲突)
-  text = text.replace(/\$\$([\s\S]+?)\$\$/g, '@@@@@$1@@@@@');
-  
-  // 处理行内公式: $formula$
-  text = text.replace(/\$([^$\n]+?)\$/g, '@@@@$1@@@@');
-  
+  // 直接返回包含 $ 的文本，让 react-katex 处理
   return text;
 };
 
@@ -139,23 +130,27 @@ function App() {
 
           const imagePart = await fileToGenerativePart(file);
           const result = await model.generateContentStream([
-            "请你识别图片中的文字内容并输出。注意：" +
-            "1. 仅在识别到明确的数学公式、数学符号、数学表达式时才使用LaTeX格式：" +
-            "   - 普通文字、标点符号、普通数字不需要LaTeX格式" +
-            "   - 只有涉及数学符号（如分数、根号、积分、求和、极限等）时才使用LaTeX" +
-            "   - 单独的等号、大于小于号如果不在公式中则不需要LaTeX" +
-            "2. 对于确定的数学公式：" +
-            "   - 行内公式（较短的、嵌在文字中的公式）用单个$包裹" +
-            "   - 行间公式（独立成行的、较长的公式）用$$包裹" +
-            "   - 分段函数、方程组使用 \\begin{cases} ... \\end{cases}" +
-            "3. 数学符号的LaTeX格式：" +
+            "请识别图片中的文字内容，严格按照以下规则输出：" +
+            "1. 数学公式规范：" +
+            "   - 独立成行的公式使用 $$...$$" +
+            "   - 行内变量和表达式使用 $...$ 包裹" +
+            "   - 不要在变量前添加任何额外的字母（如 T 或 I）" +
+            "   - 保持原文中的变量名称不变" +
+            "2. LaTeX 语法规则：" +
             "   - 分数：\\frac{分子}{分母}" +
-            "   - 根号：\\sqrt[n]{}" +
-            "   - 上标：^{}" +
-            "   - 下标：_{}" +
-            "4. 保持公式的完整性，注意括号配对和格式对齐" +
-            "5. 如果有格式不规整可以根据内容优化排版" +
-            "6. 不要有任何开场白、解释、描述、总结或结束语",
+            "   - 根号：\\sqrt[n]{...}" +
+            "   - 大于等于：\\geq" +
+            "   - 小于：<" +
+            "   - 属于：\\in" +
+            "   - 不等于：\\neq" +
+            "   - 数学集合：\\mathbb{N}" +
+            "   - 上标：^{...}" +
+            "   - 下标：_{...}" +
+            "3. 示例：" +
+            "   - 原文：'当 n 为偶数时'" +
+            "   - 正确输出：'当 $n$ 为偶数时'" +
+            "   - 错误输出：'当 Tn 为偶数时' 或 '当 @n@ 为偶数时'" +
+            "4. 直接输出内容，不要添加任何说明",
             imagePart
           ]);
 
@@ -623,51 +618,35 @@ function App() {
                   </div>
                   <div className="gradient-text">
                     <div className="streaming-text">
-                      {streamingText.split('\n').map((line, index) => {
-                        // 检查是否包含 LaTeX 公式
-                        if (line.includes('$')) {
-                          const processedLine = processLatex(line);
-                          const parts = processedLine.split(/(@@@@[^@]+@@@@|@@@@@[^@]+@@@@@)/g);
-                          
-                          return (
-                            <p 
-                              key={index} 
-                              className="animated-line"
-                              style={{ '--index': index }}
-                            >
-                              {parts.map((part, i) => {
-                                if (part.startsWith('@@@@') && part.endsWith('@@@@')) {
-                                  // 行内公式
-                                  return (
-                                    <span key={i} className="latex-inline">
-                                      <InlineMath math={part.slice(4, -4)} />
-                                    </span>
-                                  );
-                                } else if (part.startsWith('@@@@@') && part.endsWith('@@@@@')) {
-                                  // 行间公式
-                                  return (
-                                    <span key={i} className="latex-block">
-                                      <BlockMath math={part.slice(5, -5)} />
-                                    </span>
-                                  );
-                                } else {
-                                  return part;
-                                }
-                              })}
-                            </p>
-                          );
-                        } else {
-                          return (
-                            <p 
-                              key={index} 
-                              className="animated-line"
-                              style={{ '--index': index }}
-                            >
-                              {line || ' '}
-                            </p>
-                          );
-                        }
-                      })}
+                      {streamingText.split('\n').map((line, index) => (
+                        <p 
+                          key={index} 
+                          className="animated-line"
+                          style={{ '--index': index }}
+                        >
+                          {line.includes('$') ? (
+                            line.split(/(\$\$.*?\$\$|\$.*?\$)/g).map((part, i) => {
+                              if (part.startsWith('$$') && part.endsWith('$$')) {
+                                return (
+                                  <div key={i} className="latex-block">
+                                    <BlockMath>{part.slice(2, -2)}</BlockMath>
+                                  </div>
+                                );
+                              } else if (part.startsWith('$') && part.endsWith('$')) {
+                                return (
+                                  <span key={i} className="latex-inline">
+                                    <InlineMath>{part.slice(1, -1)}</InlineMath>
+                                  </span>
+                                );
+                              } else {
+                                return part;
+                              }
+                            })
+                          ) : (
+                            line || ' '
+                          )}
+                        </p>
+                      ))}
                     </div>
                   </div>
                 </div>
