@@ -89,22 +89,79 @@ function App() {
       document.removeEventListener('paste', handlePaste);
     };
   }, [images.length]);
-
-  // 将文件转换为Base64
-  const fileToGenerativePart = async (file) => {
+  
+// 圖片壓縮函數
+async function compressImage(file, maxSizeMB = 1) {
+  return new Promise((resolve) => {
     const reader = new FileReader();
-    return new Promise((resolve) => {
-      reader.onloadend = () => {
-        resolve({
-          inlineData: {
-            data: reader.result.split(',')[1],
-            mimeType: file.type
-          },
-        });
+    reader.readAsDataURL(file);
+    
+    reader.onload = (event) => {
+      const img = new Image();
+      img.src = event.target.result;
+      
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let width = img.width;
+        let height = img.height;
+        
+        // 如果圖片尺寸太大，按比例縮小
+        const MAX_WIDTH = 1600;
+        const MAX_HEIGHT = 1600;
+        
+        if (width > MAX_WIDTH) {
+          height = Math.round(height * MAX_WIDTH / width);
+          width = MAX_WIDTH;
+        }
+        
+        if (height > MAX_HEIGHT) {
+          width = Math.round(width * MAX_HEIGHT / height);
+          height = MAX_HEIGHT;
+        }
+        
+        canvas.width = width;
+        canvas.height = height;
+        
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+        
+        // 調整品質參數來控制檔案大小
+        canvas.toBlob((blob) => {
+          // 創建一個新的 File 對象，保留原始檔案名稱和類型
+          const compressedFile = new File([blob], file.name, {
+            type: file.type,
+            lastModified: Date.now()
+          });
+          resolve(compressedFile);
+        }, file.type, 0.7); // 品質設定為 0.7 (範圍 0-1)
       };
-      reader.readAsDataURL(file);
-    });
-  };
+    };
+  });
+}
+
+// 整合後的 fileToGenerativePart 函數
+const fileToGenerativePart = async (file) => {
+  // 檢查檔案大小是否需要壓縮
+  let processedFile = file;
+  if (file.size > 1000000) { // 大於 1MB 時壓縮
+    processedFile = await compressImage(file);
+    console.log(`圖片已壓縮: ${file.size} => ${processedFile.size} bytes`);
+  }
+  
+  // 繼續現有的 fileToGenerativePart 邏輯
+  const reader = new FileReader();
+  return new Promise((resolve) => {
+    reader.onloadend = () => {
+      resolve({
+        inlineData: {
+          data: reader.result.split(',')[1],
+          mimeType: processedFile.type
+        },
+      });
+    };
+    reader.readAsDataURL(processedFile);
+  });
+};
 
   // 修改文件处理逻辑
   const handleFile = async (file, index) => {
