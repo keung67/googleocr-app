@@ -27,7 +27,7 @@ export default async function handler(req, res) {
     };
 
     const result = await model.generateContentStream([
-      "请你识别图片中的文字内容并输出，如果有格式不规整可以根据内容排版，或者单词错误中文词汇错误可以纠正，不要有任何开场白、解释、描述、总结或结束语。",
+      "請你辨識圖片中的文字內容並輸出，如果有格式不規整可以根據內容排版，或者單字錯誤中文詞彙錯誤可以糾正，不要有任何開場白、解釋、描述、總結或結束語。若是中文，將標點符號以全形（全角）表示。",
       imagePart
     ]);
 
