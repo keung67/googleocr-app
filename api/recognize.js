@@ -1,4 +1,4 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { GoogleGenAI } from "@google/genai";
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -8,17 +8,6 @@ export default async function handler(req, res) {
   try {
     const { imageData, mimeType } = req.body;
 
-    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-    const model = genAI.getGenerativeModel({
-      model: "gemini-2.0-pro-exp-02-05",
-      generationConfig: {
-        temperature: 1,
-        topP: 0.95,
-        topK: 40,
-        maxOutputTokens: 8192,
-      },
-    });
-
     const imagePart = {
       inlineData: {
         data: imageData,
@@ -26,10 +15,28 @@ export default async function handler(req, res) {
       },
     };
 
-    const result = await model.generateContentStream([
-      "请你识别图片中的文字内容并输出，如果有格式不规整可以根据内容排版，或者单词错误中文词汇错误可以纠正，不要有任何开场白、解释、描述、总结或结束语。",
-      imagePart
-    ]);
+    const genAI = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+    const result = await genAI.models.generateContentStream({
+      model: "gemini-2.5-flash",
+      contents: [
+        {
+          role: "user",
+          parts: [
+            {
+              text: "请你识别图片中的文字内容并输出，如果有格式不规整可以根据内容排版，或者单词错误中文词汇错误可以纠正，不要有任何开场白、解释、描述、总结或结束语。"
+            },
+            imagePart
+          ]
+        }
+      ],
+      generationConfig: {
+        temperature: 0,  // 与开发环境保持一致
+        topP: 1,
+        topK: 1,
+        maxOutputTokens: 8192,
+        thinkingBudget: 0,  // 关闭思考模式
+      }
+    });
 
     // 设置响应头以支持流式传输
     res.writeHead(200, {
@@ -39,8 +46,8 @@ export default async function handler(req, res) {
     });
 
     // 流式传输结果
-    for await (const chunk of result.stream) {
-      const chunkText = chunk.text();
+    for await (const chunk of result) {
+      const chunkText = chunk.text || '';
       res.write(`data: ${JSON.stringify({ text: chunkText })}\n\n`);
     }
 

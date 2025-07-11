@@ -1,18 +1,19 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { GoogleGenAI } from "@google/genai";
 import 'katex/dist/katex.min.css';
 import { InlineMath, BlockMath } from 'react-katex';
 import './App.css';
 
 // 初始化 Gemini API
-const genAI = new GoogleGenerativeAI(process.env.REACT_APP_GEMINI_API_KEY);
+const genAI = new GoogleGenAI({ apiKey: process.env.REACT_APP_GEMINI_API_KEY });
 
-// 添加 generationConfig 配置
+// 统一的生成配置
 const generationConfig = {
-  temperature: 0,  // 降低随机性
+  temperature: 0,  // 降低随机性以提高一致性
   topP: 1,
   topK: 1,
   maxOutputTokens: 8192,
+  thinkingBudget: 0,  // 关闭思考模式
 };
 
 // 简化 LaTeX 处理函数
@@ -123,33 +124,38 @@ function App() {
         // 判断是开发环境还是生产环境
         if (process.env.NODE_ENV === 'development') {
           // 开发环境：直接调用 Gemini API
-          const genAI = new GoogleGenerativeAI(process.env.REACT_APP_GEMINI_API_KEY);
-          const model = genAI.getGenerativeModel({
-            model: "gemini-2.0-flash-exp",
-            generationConfig,
+          const imagePart = await fileToGenerativePart(file);
+          const result = await genAI.models.generateContentStream({
+            model: "gemini-2.5-flash",
+            contents: [
+              {
+                role: "user",
+                parts: [
+                  {
+                    text: "请识别图片中的文字内容，严格按照以下规则输出：" +
+                    "1. 数学公式规范：" +
+                    "   - 独立成行的公式使用 $$...$$" +
+                    "   - 行内变量和表达式使用 $...$ 包裹" +
+                    "   - 保持原文中的变量名称不变" +           
+                    "2. 示例：" +
+                    "   - 原文：'当 n 为偶数时'" +
+                    "   - 正确输出：'当 $n$ 为偶数时'" +
+                    "   - 错误输出：'当 Tn 为偶数时' 或 '当 @n@ 为偶数时'" +
+                    "3. 文字识别要求：" +
+                    "   - 如遇到模糊不清的单词或中文，根据上下文语境进行合理推测和修正" +
+                    "   - 保持语句通顺和语义连贯性" +
+                    "   - 专业术语和特定名词需要准确识别" +
+                    "4. 直接输出内容，不要添加任何说明"
+                  },
+                  imagePart
+                ]
+              }
+            ],
+            generationConfig
           });
 
-          const imagePart = await fileToGenerativePart(file);
-          const result = await model.generateContentStream([
-            "请识别图片中的文字内容，严格按照以下规则输出：" +
-            "1. 数学公式规范：" +
-            "   - 独立成行的公式使用 $$...$$" +
-            "   - 行内变量和表达式使用 $...$ 包裹" +
-            "   - 保持原文中的变量名称不变" +           
-            "2. 示例：" +
-            "   - 原文：'当 n 为偶数时'" +
-            "   - 正确输出：'当 $n$ 为偶数时'" +
-            "   - 错误输出：'当 Tn 为偶数时' 或 '当 @n@ 为偶数时'" +
-            "3. 文字识别要求：" +
-            "   - 如遇到模糊不清的单词或中文，根据上下文语境进行合理推测和修正" +
-            "   - 保持语句通顺和语义连贯性" +
-            "   - 专业术语和特定名词需要准确识别" +
-            "4. 直接输出内容，不要添加任何说明",
-            imagePart
-          ]);
-
-          for await (const chunk of result.stream) {
-            const chunkText = chunk.text();
+          for await (const chunk of result) {
+            const chunkText = chunk.text || '';
             fullText += chunkText;
             setStreamingText(fullText);
             setResults(prevResults => {

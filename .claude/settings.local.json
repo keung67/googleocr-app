@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(rg:*)",
+      "WebFetch(domain:ai.google.dev)",
+      "Bash(source:*)",
+      "Bash(nvm install:*)",
+      "Bash(nvm use:*)",
+      "Bash(node:*)",
+      "Bash(npm:*)"
+    ],
+    "deny": []
+  }
+}
