@@ -10,7 +10,7 @@ export default async function handler(req, res) {
 
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
     const model = genAI.getGenerativeModel({
-      model: "gemini-2.0-pro-exp-02-05",
+      model: "gemini-2.5-flash",
       generationConfig: {
         temperature: 1,
         topP: 0.95,
@@ -27,7 +27,7 @@ export default async function handler(req, res) {
     };
 
     const result = await model.generateContentStream([
-      "请你识别图片中的文字内容并输出，如果有格式不规整可以根据内容排版，或者单词错误中文词汇错误可以纠正，不要有任何开场白、解释、描述、总结或结束语。",
+      "請你辨識圖片中的文字內容並輸出，如果有格式不規整可以依照內容排版，要刪除換行符號但保留段落分隔，不產生Markdown格式。中文的標點符號必須以全型為主，若單字錯誤中文詞彙錯誤可以糾正，不要有任何開場白、解釋、描述、總結或結束語。",
       imagePart
     ]);
 
