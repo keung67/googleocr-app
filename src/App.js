@@ -125,7 +125,7 @@ function App() {
           // 开发环境：直接调用 Gemini API
           const genAI = new GoogleGenerativeAI(process.env.REACT_APP_GEMINI_API_KEY);
           const model = genAI.getGenerativeModel({
-            model: "gemini-2.5-flash-lite",
+            model: "gemini-2.5-flash",
             generationConfig,
           });
 
