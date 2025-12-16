@@ -10,7 +10,7 @@ export default async function handler(req, res) {
 
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
     const model = genAI.getGenerativeModel({
-      model: "gemini-2.0-flash",
+      model: "gemini-2.5-flash-lite",
       generationConfig: {
         temperature: 1,
         topP: 0.95,
@@ -27,7 +27,7 @@ export default async function handler(req, res) {
     };
 
     const result = await model.generateContentStream([
-      "請你辨識圖片中的文字內容並輸出，如果有格式不規整可以依照內容排版，要刪除換行符號但保留段落分隔，不產生Markdown格式。必須準確判斷標點符號是否為中文全型，若單字錯誤中文詞彙錯誤可以糾正，不要有任何開場白、解釋、描述、總結或結束語。內容若含有聖經經文，將節(Verse)的數字以上標符號表示。",
+      "請你辨識圖片中的文字內容並輸出，如果有格式不規整可以依照內容排版，要刪除換行符號但保留段落分隔，不產生Markdown標題、清單及引用等格式。必須準確判斷標點符號是否為中文全型，若單字錯誤中文詞彙錯誤可以糾正，不要有任何開場白、解釋、描述、總結或結束語。內容若含有聖經經文，將節數(Verse Number)用上標符號表示。",
       imagePart
     ]);
 
