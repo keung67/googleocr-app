@@ -10,7 +10,7 @@ export default async function handler(req, res) {
 
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
     const model = genAI.getGenerativeModel({
-      model: "gemini-2.5-flash-lite",
+      model: "gemini-2.0-flash-exp",
       generationConfig: {
         temperature: 1,
         topP: 0.95,
@@ -27,7 +27,7 @@ export default async function handler(req, res) {
     };
 
     const result = await model.generateContentStream([
-      "請你辨識圖片中的文字內容並輸出，如果有格式不規整可以依照內容排版。在同一段落的句子不要換行要接在同一句，但保留不同段落的分隔。若是多欄排版，順序由左欄由上至下，再接右欄由上至下，因跨欄分隔的未完成斷句不另起新段落，必須不換行將句子接續並合併在同一段。不產生Markdown格式。必須準確判斷標點符號是否為中文全型。若單字錯誤中文詞彙錯誤可以糾正，不要有任何開場白、解釋、描述、總結或結束語。",
+      "請你辨識圖片中的文字內容並輸出，如果有格式不規整可以依照內容排版。在同一段落的句子不要換行要接在同一句，但保留不同段落的分隔。若是多欄排版，順序由左欄由上至下，再接右欄由上至下，若跨欄分隔未完成的斷句，不要換行將句子接在同一段合併。不產生Markdown格式。必須準確判斷標點符號是否為中文全型。若單字錯誤中文詞彙錯誤可以糾正，不要有任何開場白、解釋、描述、總結或結束語。",
       imagePart
     ]);
 
