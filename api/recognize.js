@@ -105,12 +105,14 @@ export default async function handler(req, res) {
  */
 function isRetryableError(error) {
   const message = error?.message || "";
+  const status = error?.status ?? error?.statusCode;
 
-  // GoogleGenerativeAIFetchError 帶有 HTTP 狀態碼
-  const retryableStatusPattern = /\[(429|500|502|503|504)[^\]]*\]/;
-  if (retryableStatusPattern.test(message)) return true;
+  // 直接比對 status code 屬性（更可靠）
+  if ([429, 500, 502, 503, 504].includes(status)) return true;
 
-  // 網路層錯誤
+  // 保留原本的 message pattern（含/不含括號都涵蓋）
+  if (/\b(429|500|502|503|504)\b/.test(message)) return true;
+
   if (
     message.includes("fetch") ||
     message.includes("ECONNRESET") ||
@@ -118,9 +120,7 @@ function isRetryableError(error) {
     message.includes("Service Unavailable") ||
     message.includes("high demand") ||
     message.includes("overloaded")
-  ) {
-    return true;
-  }
+  ) return true;
 
   return false;
 }
